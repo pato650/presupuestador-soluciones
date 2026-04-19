@@ -168,12 +168,14 @@ function generatePDFHTML(data) {
   `).join("");
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 @page{size:A4;margin:0}*{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%}
-body{font-family:'Inter',sans-serif;background:${t.fondo};color:${textMain}}
-.page{width:210mm;min-height:297mm;height:297mm;padding:0;position:relative;background:${t.fondo};display:flex;flex-direction:column}
+html,body{min-height:100vh;width:100%}
+body{font-family:'Inter',sans-serif;background:${t.fondo};color:${textMain};display:flex;flex-direction:column}
+.page{width:100%;max-width:210mm;margin:0 auto;min-height:100vh;padding:0;position:relative;background:${t.fondo};display:flex;flex-direction:column;flex:1 0 auto}
+@media print{html,body{height:297mm}.page{min-height:297mm;height:297mm;max-width:210mm}}
 .header{background:linear-gradient(135deg,${t.fondoOscuro} 0%,${t.fondo} 40%,${lightBg?"#F3F4F6":"#1B2D45"} 100%);padding:30px 38px 24px;border-bottom:3px solid ${t.acento};position:relative;overflow:hidden;flex-shrink:0}
 .header::before{content:'';position:absolute;top:-20px;right:-20px;width:120px;height:120px;background:radial-gradient(circle,${t.dorado}15 0%,transparent 70%)}
 .header-top{display:flex;justify-content:space-between;align-items:flex-start}
