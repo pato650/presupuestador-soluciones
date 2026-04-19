@@ -152,71 +152,74 @@ function generatePDFHTML(data) {
   const matriculasFooter = [empresa.matricula1, empresa.matricula2].filter(Boolean).map(m => `<span class="footer-mat">Mat. ${m}</span>`).join(" ");
 
   const logoHTML = t.logo
-    ? `<img src="${t.logo}" style="width:48px;height:48px;object-fit:contain;border-radius:10px;background:#fff;padding:4px;box-shadow:0 4px 16px ${t.dorado}44;" alt="Logo" />`
-    : `<div style="width:48px;height:48px;background:linear-gradient(135deg,${t.dorado},${t.doradoOscuro});border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px ${t.dorado}44;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="${t.fondo}" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>`;
+    ? `<img src="${t.logo}" style="width:44px;height:44px;object-fit:contain;border-radius:10px;background:#fff;padding:4px;box-shadow:0 4px 16px ${t.dorado}44;flex-shrink:0" alt="Logo" />`
+    : `<div style="width:44px;height:44px;background:linear-gradient(135deg,${t.dorado},${t.doradoOscuro});border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px ${t.dorado}44;flex-shrink:0"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="${t.fondo}" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>`;
 
   const serviciosHTML = servicios.map((s, i) => `
-    <div style="margin-bottom:22px;">
-      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:8px;">
-        <div style="background:linear-gradient(135deg,${t.acento},${t.acentoClaro});color:#fff;font-size:13px;font-weight:800;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${String(i+1).padStart(2,'0')}</div>
-        <div style="font-size:14px;font-weight:700;color:${textMain};line-height:1.4;">${s.titulo}</div>
+    <div style="margin-bottom:18px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:7px;">
+        <div style="background:linear-gradient(135deg,${t.acento},${t.acentoClaro});color:#fff;font-size:12px;font-weight:800;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${String(i+1).padStart(2,'0')}</div>
+        <div style="font-size:13px;font-weight:700;color:${textMain};line-height:1.3;">${s.titulo}</div>
       </div>
-      <div style="margin-left:48px;">
-        ${s.items.map(item => `<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:5px;"><span style="color:${t.acento};font-size:11px;margin-top:3px;flex-shrink:0;">■</span><span style="font-size:12.5px;color:${textMuted};line-height:1.5;">${item}</span></div>`).join("")}
+      <div style="margin-left:44px;">
+        ${s.items.map(item => `<div style="display:flex;gap:7px;align-items:flex-start;margin-bottom:4px;"><span style="color:${t.acento};font-size:10px;margin-top:3px;flex-shrink:0;">■</span><span style="font-size:12px;color:${textMuted};line-height:1.5;">${item}</span></div>`).join("")}
       </div>
     </div>
   `).join("");
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=794, initial-scale=0.48, minimum-scale=0.2, maximum-scale=2">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 @page{size:A4;margin:0}*{margin:0;padding:0;box-sizing:border-box}
-html,body{min-height:100vh;width:100%}
-body{font-family:'Inter',sans-serif;background:${t.fondo};color:${textMain};display:flex;flex-direction:column}
-.page{width:100%;max-width:210mm;margin:0 auto;min-height:100vh;padding:0;position:relative;background:${t.fondo};display:flex;flex-direction:column;flex:1 0 auto}
-@media print{html,body{height:297mm}.page{min-height:297mm;height:297mm;max-width:210mm}}
-.header{background:linear-gradient(135deg,${t.fondoOscuro} 0%,${t.fondo} 40%,${lightBg?"#F3F4F6":"#1B2D45"} 100%);padding:30px 38px 24px;border-bottom:3px solid ${t.acento};position:relative;overflow:hidden;flex-shrink:0}
+html{width:794px}
+html,body{min-height:1123px}
+body{font-family:'Inter',sans-serif;background:${t.fondo};color:${textMain};display:flex;flex-direction:column;width:794px;margin:0 auto}
+.page{width:794px;min-height:1123px;padding:0;position:relative;background:${t.fondo};display:flex;flex-direction:column;flex:1 0 auto}
+@media print{html,body{width:210mm;min-height:297mm}.page{width:210mm;min-height:297mm;height:297mm}}
+.header{background:linear-gradient(135deg,${t.fondoOscuro} 0%,${t.fondo} 40%,${lightBg?"#F3F4F6":"#1B2D45"} 100%);padding:24px 34px 20px;border-bottom:3px solid ${t.acento};position:relative;overflow:hidden;flex-shrink:0}
 .header::before{content:'';position:absolute;top:-20px;right:-20px;width:120px;height:120px;background:radial-gradient(circle,${t.dorado}15 0%,transparent 70%)}
-.header-top{display:flex;justify-content:space-between;align-items:flex-start}
-.logo-section{display:flex;align-items:center;gap:14px}
-.company-name{font-size:24px;font-weight:900;color:${lightBg?"#111":"#fff"};letter-spacing:1px}
-.company-sub{font-size:10.5px;color:${t.acentoClaro};margin-top:3px;letter-spacing:0.5px}
-.header-info{font-size:10px;color:${textSoft};text-align:right;line-height:1.6;margin-top:4px}
-.header-mat{font-size:10px;color:${t.acentoClaro};font-weight:600}
-.presup-bar{background:${sectionBg};border:1px solid ${borderColor};border-radius:10px;margin:22px 38px 0;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
-.presup-nro{font-size:10px;color:${textSoft};text-transform:uppercase;letter-spacing:2px}
-.presup-nro span{font-size:20px;color:${t.dorado};font-weight:800;display:block;margin-top:3px}
-.presup-titulo{font-size:14px;color:${textMain};font-weight:600;max-width:55%;text-align:center;line-height:1.4}
-.presup-fecha{font-size:10px;color:${textSoft};text-align:right}
-.presup-fecha span{font-size:15px;color:${textMain};font-weight:600;display:block;margin-top:3px}
-.info-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:18px 38px 0;flex-shrink:0}
-.info-card{background:${cardBg};border:1px solid ${borderColor};border-radius:8px;padding:16px 18px}
-.info-card-label{font-size:9px;color:${t.acento};text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:7px}
-.info-card-value{font-size:13px;color:${textMain};font-weight:500;line-height:1.5}
-.content{padding:0 38px;flex:1 1 auto;display:flex;flex-direction:column}
-.section-header{display:flex;align-items:center;gap:10px;margin:26px 0 14px;flex-shrink:0}
-.section-header-text{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:${t.dorado};font-weight:700;white-space:nowrap}
+.header-top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px}
+.logo-section{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
+.company-name{font-size:20px;font-weight:900;color:${lightBg?"#111":"#fff"};letter-spacing:0.5px;line-height:1.1}
+.company-sub{font-size:10px;color:${t.acentoClaro};margin-top:3px;letter-spacing:0.3px}
+.header-info{font-size:9.5px;color:${textSoft};text-align:right;line-height:1.7;margin-top:2px;white-space:nowrap}
+.header-mat{font-size:9.5px;color:${t.acentoClaro};font-weight:600}
+.presup-bar{background:${sectionBg};border:1px solid ${borderColor};border-radius:10px;margin:16px 34px 0;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-shrink:0}
+.presup-nro{font-size:9px;color:${textSoft};text-transform:uppercase;letter-spacing:1.5px;flex-shrink:0}
+.presup-nro span{font-size:18px;color:${t.dorado};font-weight:800;display:block;margin-top:2px}
+.presup-titulo{font-size:13px;color:${textMain};font-weight:600;text-align:center;line-height:1.4;flex:1}
+.presup-fecha{font-size:9px;color:${textSoft};text-align:right;flex-shrink:0}
+.presup-fecha span{font-size:13px;color:${textMain};font-weight:600;display:block;margin-top:2px;white-space:nowrap}
+.info-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:14px 34px 0;flex-shrink:0}
+.info-card{background:${cardBg};border:1px solid ${borderColor};border-radius:8px;padding:13px 15px;min-width:0}
+.info-card-label{font-size:8.5px;color:${t.acento};text-transform:uppercase;letter-spacing:1.2px;font-weight:700;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.info-card-value{font-size:12.5px;color:${textMain};font-weight:500;line-height:1.4;word-wrap:break-word}
+.content{padding:0 34px;flex:1 1 auto;display:flex;flex-direction:column}
+.section-header{display:flex;align-items:center;gap:10px;margin:22px 0 12px;flex-shrink:0}
+.section-header-text{font-size:9.5px;text-transform:uppercase;letter-spacing:1.8px;color:${t.dorado};font-weight:700;white-space:nowrap}
 .section-header-line{flex:1;height:1px;background:linear-gradient(90deg,${t.dorado}66,transparent)}
-.objeto-box{background:${sectionBg};border:1px solid ${borderColor};border-radius:10px;padding:20px 24px;font-size:13px;color:${textMuted};line-height:1.8;text-align:justify;flex-shrink:0}
+.objeto-box{background:${sectionBg};border:1px solid ${borderColor};border-radius:10px;padding:16px 20px;font-size:12.5px;color:${textMuted};line-height:1.7;text-align:justify;flex-shrink:0}
 .alcance-wrapper{flex-shrink:0}
-.responsabilidad-box{background:${cardBg};border:1px solid ${borderColor};border-left:3px solid ${t.acento};border-radius:0 8px 8px 0;padding:18px 22px;font-size:11.5px;color:${textSoft};line-height:1.8;text-align:justify;flex-shrink:0}
+.responsabilidad-box{background:${cardBg};border:1px solid ${borderColor};border-left:3px solid ${t.acento};border-radius:0 8px 8px 0;padding:14px 18px;font-size:11px;color:${textSoft};line-height:1.7;text-align:justify;flex-shrink:0}
 .spacer{flex:1 1 auto;min-height:20px}
-.honorarios-box{background:linear-gradient(135deg,${t.fondoOscuro},${sectionBg});border:2px solid ${t.dorado}44;border-radius:12px;padding:26px 28px;display:flex;justify-content:space-between;align-items:center;margin-top:8px;flex-shrink:0}
-.honorarios-label{font-size:10px;color:${t.dorado};text-transform:uppercase;letter-spacing:2px;font-weight:700;margin-bottom:6px}
-.honorarios-monto{font-size:32px;font-weight:900;color:${t.dorado};line-height:1.1}
-.honorarios-letras{font-size:11px;color:${textSoft};margin-top:6px;font-style:italic}
-.condicion-label{font-size:10px;color:${t.acento};text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:8px}
-.condicion-item{font-size:12px;color:${textMuted};margin-bottom:4px;line-height:1.5}
+.honorarios-box{background:linear-gradient(135deg,${t.fondoOscuro},${sectionBg});border:2px solid ${t.dorado}44;border-radius:12px;padding:22px 26px;display:flex;justify-content:space-between;align-items:center;gap:24px;margin-top:8px;flex-shrink:0}
+.honorarios-left{flex:1;min-width:0}
+.honorarios-right{flex-shrink:0;text-align:right;min-width:180px}
+.honorarios-label{font-size:9.5px;color:${t.dorado};text-transform:uppercase;letter-spacing:1.8px;font-weight:700;margin-bottom:5px}
+.honorarios-monto{font-size:30px;font-weight:900;color:${t.dorado};line-height:1.1;white-space:nowrap}
+.honorarios-letras{font-size:10.5px;color:${textSoft};margin-top:5px;font-style:italic;line-height:1.4}
+.condicion-label{font-size:9.5px;color:${t.acento};text-transform:uppercase;letter-spacing:1.2px;font-weight:700;margin-bottom:7px;white-space:nowrap}
+.condicion-item{font-size:11.5px;color:${textMuted};margin-bottom:4px;line-height:1.5;white-space:nowrap}
 .firma-section{display:flex;justify-content:space-between;align-items:flex-end;margin:32px 0 20px;gap:40px;flex-shrink:0}
 .firma-box{flex:1;text-align:center}
 .firma-line{border-top:1px solid ${borderColor};margin-bottom:8px;padding-top:4px}
 .firma-label{font-size:10px;color:${textSoft};text-transform:uppercase;letter-spacing:1.5px;font-weight:600}
 .firma-nombre{font-size:11px;color:${textMain};font-weight:600;margin-top:3px}
 .firma-mat{font-size:9px;color:${t.acentoClaro};margin-top:2px}
-.footer{background:${t.fondoOscuro};border-top:2px solid ${t.acento};padding:14px 38px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;margin-top:auto}
-.footer-text{font-size:9px;color:${textSoft}}
-.footer-mat{display:inline-block;background:${sectionBg};border:1px solid ${borderColor};border-radius:4px;padding:2px 8px;font-size:8.5px;color:${t.acentoClaro};margin:0 3px}
+.footer{background:${t.fondoOscuro};border-top:2px solid ${t.acento};padding:12px 34px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;margin-top:auto}
+.footer-text{font-size:8.5px;color:${textSoft};white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.footer-mat{display:inline-block;background:${sectionBg};border:1px solid ${borderColor};border-radius:4px;padding:2px 7px;font-size:8px;color:${t.acentoClaro};margin:0 2px}
 </style></head><body>
 <div class="page">
   <div class="header"><div class="header-top">
@@ -246,8 +249,8 @@ body{font-family:'Inter',sans-serif;background:${t.fondo};color:${textMain};disp
     <div class="spacer"></div>
     <div class="section-header"><div class="section-header-text">Honorarios Profesionales</div><div class="section-header-line"></div></div>
     <div class="honorarios-box">
-      <div><div class="honorarios-label">Honorarios Profesionales</div><div class="honorarios-monto">${formatCurrency(honorarios)}</div><div class="honorarios-letras">Pesos ${montoEnLetras} – Precio total de los ${servicios.length} trabajo${servicios.length===1?"":"s"}</div></div>
-      <div style="text-align:right"><div class="condicion-label">Condición de Pago</div>${condicionPago.map(c=>`<div class="condicion-item">${c}</div>`).join("")}</div>
+      <div class="honorarios-left"><div class="honorarios-label">Honorarios Profesionales</div><div class="honorarios-monto">${formatCurrency(honorarios)}</div><div class="honorarios-letras">Pesos ${montoEnLetras} – Precio total de los ${servicios.length} trabajo${servicios.length===1?"":"s"}</div></div>
+      <div class="honorarios-right"><div class="condicion-label">Condición de Pago</div>${condicionPago.map(c=>`<div class="condicion-item">${c}</div>`).join("")}</div>
     </div>
     <div style="height:30px;flex-shrink:0"></div>
   </div>
