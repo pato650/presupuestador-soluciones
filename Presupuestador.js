@@ -446,7 +446,7 @@ function Presupuestador() {
     try {
       const html = generatePDFHTML({ empresa, theme, cliente, direccionObra, nroPresupuesto, tituloPresupuesto, objetoServicio, servicios, responsabilidad, honorarios:Number(honorarios), condicionPago, montoEnLetras:numberToWords(Number(honorarios)) });
 
-      // Create hidden iframe with exact A4 dimensions (794 x 1123 px at 96dpi)
+      // Create hidden iframe with exact A4 dimensions
       const iframe = document.createElement("iframe");
       iframe.style.position = "fixed";
       iframe.style.top = "-10000px";
@@ -456,7 +456,6 @@ function Presupuestador() {
       iframe.style.border = "none";
       document.body.appendChild(iframe);
 
-      // Write HTML into iframe
       const doc = iframe.contentDocument || iframe.contentWindow.document;
       doc.open();
       doc.write(html);
@@ -466,7 +465,6 @@ function Presupuestador() {
       await new Promise((resolve) => {
         const checkReady = () => {
           if (doc.readyState === "complete") {
-            // Extra wait for fonts
             setTimeout(resolve, 800);
           } else {
             setTimeout(checkReady, 100);
@@ -475,7 +473,6 @@ function Presupuestador() {
         checkReady();
       });
 
-      // Wait for any image (logo) to load
       const images = doc.querySelectorAll("img");
       if (images.length > 0) {
         await Promise.all(Array.from(images).map(img => {
@@ -484,7 +481,6 @@ function Presupuestador() {
         }));
       }
 
-      // Capture using html2canvas
       const pageElement = doc.querySelector(".page") || doc.body;
       const canvas = await window.html2canvas(pageElement, {
         scale: 2,
@@ -497,7 +493,6 @@ function Presupuestador() {
         windowHeight: 1123,
       });
 
-      // Create PDF with jsPDF
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF({
         orientation: "portrait",
@@ -507,9 +502,46 @@ function Presupuestador() {
 
       const imgData = canvas.toDataURL("image/jpeg", 0.95);
       pdf.addImage(imgData, "JPEG", 0, 0, 210, 297, undefined, "FAST");
-      pdf.save(`Presupuesto_${nroPresupuesto}.pdf`);
 
-      // Cleanup
+      const fileName = `Presupuesto_${nroPresupuesto}.pdf`;
+
+      // Detect iOS (iPhone/iPad)
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+      if (isIOS && navigator.share) {
+        // iOS: use native share sheet (lets user save to Files, send via WhatsApp, etc)
+        try {
+          const blob = pdf.output("blob");
+          const file = new File([blob], fileName, { type: "application/pdf" });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: fileName,
+            });
+          } else {
+            // Fallback: save with jsPDF (may open in viewer on iOS)
+            pdf.save(fileName);
+          }
+        } catch (shareErr) {
+          // User cancelled share or share failed - fallback to save
+          if (shareErr.name !== "AbortError") {
+            pdf.save(fileName);
+          }
+        }
+      } else {
+        // Android / Desktop: direct download via blob URL (forces download)
+        const blob = pdf.output("blob");
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName;
+        a.style.display = "none";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+
       document.body.removeChild(iframe);
     } catch (err) {
       console.error("Error generando PDF:", err);
