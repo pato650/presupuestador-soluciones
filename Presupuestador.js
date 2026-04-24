@@ -76,12 +76,16 @@ const SERVICIOS_CATALOGO = [
 
 // Preset palettes for quick selection
 const PRESETS = [
-  { name: "Azul Profesional", fondo: "#0D1B2A", fondoOscuro: "#0A1628", acento: "#1E88E5", acentoClaro: "#42A5F5", dorado: "#FFB300", doradoOscuro: "#E6A200" },
-  { name: "Bordó Elegante",   fondo: "#1A0F14", fondoOscuro: "#120A0E", acento: "#C62828", acentoClaro: "#E53935", dorado: "#FFB300", doradoOscuro: "#E6A200" },
-  { name: "Verde Ecológico",   fondo: "#0F1A14", fondoOscuro: "#0A120E", acento: "#2E7D32", acentoClaro: "#43A047", dorado: "#FFB300", doradoOscuro: "#E6A200" },
-  { name: "Grafito Minimal",   fondo: "#1A1A1A", fondoOscuro: "#0F0F0F", acento: "#616161", acentoClaro: "#9E9E9E", dorado: "#FFB300", doradoOscuro: "#E6A200" },
-  { name: "Negro Premium",     fondo: "#000000", fondoOscuro: "#0A0A0A", acento: "#D4AF37", acentoClaro: "#F5C842", dorado: "#D4AF37", doradoOscuro: "#B8941F" },
-  { name: "Celeste Claro",     fondo: "#F5F7FA", fondoOscuro: "#FFFFFF", acento: "#0277BD", acentoClaro: "#0288D1", dorado: "#F57F17", doradoOscuro: "#E65100" },
+  // Oscuros
+  { name: "Azul Profesional", modo: "oscuro", fondo: "#0D1B2A", fondoOscuro: "#0A1628", acento: "#1E88E5", acentoClaro: "#42A5F5", dorado: "#FFB300", doradoOscuro: "#E6A200" },
+  { name: "Bordó Elegante", modo: "oscuro", fondo: "#1A0F14", fondoOscuro: "#120A0E", acento: "#C62828", acentoClaro: "#E53935", dorado: "#FFB300", doradoOscuro: "#E6A200" },
+  { name: "Verde Ecológico", modo: "oscuro", fondo: "#0F1A14", fondoOscuro: "#0A120E", acento: "#2E7D32", acentoClaro: "#43A047", dorado: "#FFB300", doradoOscuro: "#E6A200" },
+  { name: "Grafito Minimal", modo: "oscuro", fondo: "#1A1A1A", fondoOscuro: "#0F0F0F", acento: "#616161", acentoClaro: "#9E9E9E", dorado: "#FFB300", doradoOscuro: "#E6A200" },
+  { name: "Negro Premium", modo: "oscuro", fondo: "#000000", fondoOscuro: "#0A0A0A", acento: "#D4AF37", acentoClaro: "#F5C842", dorado: "#D4AF37", doradoOscuro: "#B8941F" },
+  // Claros
+  { name: "Blanco Clásico", modo: "claro", fondo: "#FFFFFF", fondoOscuro: "#F5F7FA", acento: "#1E88E5", acentoClaro: "#42A5F5", dorado: "#E65100", doradoOscuro: "#BF360C" },
+  { name: "Celeste Claro", modo: "claro", fondo: "#F5F7FA", fondoOscuro: "#FFFFFF", acento: "#0277BD", acentoClaro: "#0288D1", dorado: "#F57F17", doradoOscuro: "#E65100" },
+  { name: "Crema Corporativo", modo: "claro", fondo: "#FAF8F3", fondoOscuro: "#FFFFFF", acento: "#2E5077", acentoClaro: "#4A7BA7", dorado: "#C7882B", doradoOscuro: "#A67220" },
 ];
 
 const formatCurrency = (n) => {
@@ -435,17 +439,84 @@ function Presupuestador() {
   const addServicio = (titulo, items) => setServicios(prev => [...prev, { titulo, items: items.filter(i=>i.trim()) }]);
   const removeServicio = (idx) => setServicios(prev => prev.filter((_,i)=>i!==idx));
 
-  const handleDownload = useCallback(() => {
-    const html = generatePDFHTML({ empresa, theme, cliente, direccionObra, nroPresupuesto, tituloPresupuesto, objetoServicio, servicios, responsabilidad, honorarios:Number(honorarios), condicionPago, montoEnLetras:numberToWords(Number(honorarios)) });
-    const blob = new Blob([html], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `Presupuesto_${nroPresupuesto}.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  const [generandoPDF, setGenerandoPDF] = useState(false);
+
+  const handleDownload = useCallback(async () => {
+    setGenerandoPDF(true);
+    try {
+      const html = generatePDFHTML({ empresa, theme, cliente, direccionObra, nroPresupuesto, tituloPresupuesto, objetoServicio, servicios, responsabilidad, honorarios:Number(honorarios), condicionPago, montoEnLetras:numberToWords(Number(honorarios)) });
+
+      // Create hidden iframe with exact A4 dimensions (794 x 1123 px at 96dpi)
+      const iframe = document.createElement("iframe");
+      iframe.style.position = "fixed";
+      iframe.style.top = "-10000px";
+      iframe.style.left = "-10000px";
+      iframe.style.width = "794px";
+      iframe.style.height = "1123px";
+      iframe.style.border = "none";
+      document.body.appendChild(iframe);
+
+      // Write HTML into iframe
+      const doc = iframe.contentDocument || iframe.contentWindow.document;
+      doc.open();
+      doc.write(html);
+      doc.close();
+
+      // Wait for fonts and images to load
+      await new Promise((resolve) => {
+        const checkReady = () => {
+          if (doc.readyState === "complete") {
+            // Extra wait for fonts
+            setTimeout(resolve, 800);
+          } else {
+            setTimeout(checkReady, 100);
+          }
+        };
+        checkReady();
+      });
+
+      // Wait for any image (logo) to load
+      const images = doc.querySelectorAll("img");
+      if (images.length > 0) {
+        await Promise.all(Array.from(images).map(img => {
+          if (img.complete) return Promise.resolve();
+          return new Promise(res => { img.onload = res; img.onerror = res; });
+        }));
+      }
+
+      // Capture using html2canvas
+      const pageElement = doc.querySelector(".page") || doc.body;
+      const canvas = await window.html2canvas(pageElement, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: theme.fondo,
+        width: 794,
+        height: 1123,
+        windowWidth: 794,
+        windowHeight: 1123,
+      });
+
+      // Create PDF with jsPDF
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const imgData = canvas.toDataURL("image/jpeg", 0.95);
+      pdf.addImage(imgData, "JPEG", 0, 0, 210, 297, undefined, "FAST");
+      pdf.save(`Presupuesto_${nroPresupuesto}.pdf`);
+
+      // Cleanup
+      document.body.removeChild(iframe);
+    } catch (err) {
+      console.error("Error generando PDF:", err);
+      alert("Hubo un problema generando el PDF. Intentá de nuevo.");
+    } finally {
+      setGenerandoPDF(false);
+    }
   }, [empresa, theme, cliente, direccionObra, nroPresupuesto, tituloPresupuesto, objetoServicio, servicios, responsabilidad, honorarios, condicionPago]);
 
   const stepTitles = ["Datos Generales", "Servicios", "Honorarios", "Personalización", "Vista Previa"];
@@ -671,22 +742,49 @@ function Presupuestador() {
             </div>
 
             {/* PRESETS */}
-            <SectionLabel text="Paletas predefinidas" />
-            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))", gap:"10px", marginBottom:"16px" }}>
-              {PRESETS.map((preset) => {
-                const isActive = theme.fondo.toLowerCase() === preset.fondo.toLowerCase() && theme.acento.toLowerCase() === preset.acento.toLowerCase();
-                return (
-                  <button key={preset.name} onClick={()=>updateTheme(preset)}
-                    style={{ background:COLORS.dark, border:`2px solid ${isActive ? COLORS.gold : COLORS.border}`, borderRadius:"10px", padding:"10px", cursor:"pointer", fontFamily:"inherit", textAlign:"left", transition:"all 0.2s" }}>
-                    <div style={{ display:"flex", gap:"4px", marginBottom:"8px" }}>
-                      <div style={{ flex:1, height:"28px", background:preset.fondo, borderRadius:"4px" }} />
-                      <div style={{ flex:1, height:"28px", background:preset.acento, borderRadius:"4px" }} />
-                      <div style={{ flex:1, height:"28px", background:preset.dorado, borderRadius:"4px" }} />
-                    </div>
-                    <div style={{ fontSize:"11px", fontWeight:"600", color:isActive ? COLORS.gold : COLORS.white }}>{preset.name}</div>
-                  </button>
-                );
-              })}
+            <SectionLabel text="Estilo del PDF" />
+            <div style={{ background:COLORS.dark, border:`1px solid ${COLORS.border}`, borderRadius:"12px", padding:"16px", marginBottom:"16px" }}>
+              <div style={{ fontSize:"11px", color:COLORS.electric, fontWeight:"700", textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:"10px", display:"flex", alignItems:"center", gap:"8px" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                Tema Oscuro
+              </div>
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))", gap:"8px", marginBottom:"16px" }}>
+                {PRESETS.filter(p => p.modo === "oscuro").map((preset) => {
+                  const isActive = theme.fondo.toLowerCase() === preset.fondo.toLowerCase() && theme.acento.toLowerCase() === preset.acento.toLowerCase();
+                  return (
+                    <button key={preset.name} onClick={()=>updateTheme(preset)}
+                      style={{ background:COLORS.navyMid, border:`2px solid ${isActive ? COLORS.gold : COLORS.border}`, borderRadius:"10px", padding:"10px", cursor:"pointer", fontFamily:"inherit", textAlign:"left", transition:"all 0.2s" }}>
+                      <div style={{ display:"flex", gap:"3px", marginBottom:"6px" }}>
+                        <div style={{ flex:1, height:"24px", background:preset.fondo, borderRadius:"4px" }} />
+                        <div style={{ flex:1, height:"24px", background:preset.acento, borderRadius:"4px" }} />
+                        <div style={{ flex:1, height:"24px", background:preset.dorado, borderRadius:"4px" }} />
+                      </div>
+                      <div style={{ fontSize:"11px", fontWeight:"600", color:isActive ? COLORS.gold : COLORS.white }}>{preset.name}</div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div style={{ fontSize:"11px", color:COLORS.gold, fontWeight:"700", textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:"10px", display:"flex", alignItems:"center", gap:"8px" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                Tema Claro
+              </div>
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))", gap:"8px" }}>
+                {PRESETS.filter(p => p.modo === "claro").map((preset) => {
+                  const isActive = theme.fondo.toLowerCase() === preset.fondo.toLowerCase() && theme.acento.toLowerCase() === preset.acento.toLowerCase();
+                  return (
+                    <button key={preset.name} onClick={()=>updateTheme(preset)}
+                      style={{ background:COLORS.navyMid, border:`2px solid ${isActive ? COLORS.gold : COLORS.border}`, borderRadius:"10px", padding:"10px", cursor:"pointer", fontFamily:"inherit", textAlign:"left", transition:"all 0.2s" }}>
+                      <div style={{ display:"flex", gap:"3px", marginBottom:"6px" }}>
+                        <div style={{ flex:1, height:"24px", background:preset.fondo, borderRadius:"4px", border:"1px solid rgba(0,0,0,0.1)" }} />
+                        <div style={{ flex:1, height:"24px", background:preset.acento, borderRadius:"4px" }} />
+                        <div style={{ flex:1, height:"24px", background:preset.dorado, borderRadius:"4px" }} />
+                      </div>
+                      <div style={{ fontSize:"11px", fontWeight:"600", color:isActive ? COLORS.gold : COLORS.white }}>{preset.name}</div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* CUSTOM COLORS */}
@@ -721,8 +819,12 @@ function Presupuestador() {
                 <Btn onClick={()=>setStep(4)}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Vista Previa Completa
                 </Btn>
-                <Btn variant="gold" onClick={handleDownload}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Descargar Presupuesto
+                <Btn variant="gold" onClick={handleDownload} disabled={generandoPDF}>
+                  {generandoPDF ? (
+                    <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation:"spin 1s linear infinite" }}><path d="M21 12a9 9 0 11-6.219-8.56"/></svg> Generando PDF...</>
+                  ) : (
+                    <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Descargar PDF</>
+                  )}
                 </Btn>
               </div>
             </div>
@@ -740,8 +842,12 @@ function Presupuestador() {
               <Btn variant="ghost" onClick={()=>setStep(3)}>← Editar diseño</Btn>
               <div style={{ display:"flex", gap:"10px" }}>
                 <Btn onClick={()=>{setCliente("");setDireccionObra("");setTituloPresupuesto("");setObjetoServicio("");setServicios([]);setHonorarios("");setNroPresupuesto(genNro());setCondicionPago(["50% Antes de comenzar el trabajo","50% Contra entrega del trabajo finalizado"]);setStep(0);}}>+ Nuevo Presupuesto</Btn>
-                <Btn variant="gold" onClick={handleDownload}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Descargar Presupuesto
+                <Btn variant="gold" onClick={handleDownload} disabled={generandoPDF}>
+                  {generandoPDF ? (
+                    <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation:"spin 1s linear infinite" }}><path d="M21 12a9 9 0 11-6.219-8.56"/></svg> Generando PDF...</>
+                  ) : (
+                    <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Descargar PDF</>
+                  )}
                 </Btn>
               </div>
             </div>
@@ -751,6 +857,7 @@ function Presupuestador() {
 
       <style>{`
         @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
         input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
         input[type=number]{-moz-appearance:textfield}
         ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:${COLORS.dark}}
